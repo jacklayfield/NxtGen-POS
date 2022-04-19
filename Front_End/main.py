@@ -7,6 +7,7 @@ from venv import create
 from xmlrpc.client import Server
 import mysql.connector
 from setuptools import Command
+from cryptography.fernet import Fernet
 
 # Connecting to Database
 mydb = mysql.connector.connect(
@@ -45,6 +46,11 @@ class NewCustomer(tk.Tk):
         self.button = ttk.Button(self, text='Submit')
         self.button['command'] = self.button_clicked
         self.button.place(x=220, y=150)
+
+        # To cancel the new customer creation
+        cancelButton = ttk.Button(self, text="Close",
+                          command=self.closeButton)
+        cancelButton.place(x=5, y=170)
 
     # When information is entered this will submit it to the database
     def button_clicked(self):
@@ -96,6 +102,11 @@ class NewCustomer(tk.Tk):
             self.destroy()
             ServerView()
 
+    # Close the window button
+    def closeButton(self):
+        self.destroy()
+        ServerView()
+
 # page for the server view
 class ServerView(tk.Tk):
     def __init__(self):
@@ -143,7 +154,7 @@ class TableSelect(tk.Tk):
         self.geometry("500x200")
 
         # Makes the button that can cancel the page
-        cancelButton = Button(self, text="Close",
+        cancelButton = ttk.Button(self, text="Close",
                           command=self.closeButton)
         cancelButton.place(x=5, y=170)
 
@@ -164,7 +175,7 @@ class TableSelect(tk.Tk):
         mycursor.execute('SELECT * FROM sys.customer')
         customerInfo = mycursor.fetchall()
         for customer in customerInfo:
-            customerOptions.append(str(customer[1]) + " " + str(customer[2]))
+            customerOptions.append(str(customer[1]) + " " + str(customer[2]) + " (" + str(customer[0]) + ")")
         self.customerDropDown = ttk.Combobox(self, value=customerOptions)
         self.customerDropDown.current(0)
         # self.customerDropDown.bind("<<ComboboxSelected>>", self.selectedTable)
@@ -232,11 +243,11 @@ class MenuSelect(tk.Tk):
         appetizers = [""]
         entrees = [""]
         sides = [""]
-        [drinks.append((item[1], item[3])) for item in menuItems if item[2] == "Drink"]
-        [alcohol.append((item[1], item[3])) for item in menuItems if item[2] == "Alcohol"]
-        [appetizers.append((item[1], item[3])) for item in menuItems if item[2] == "Appetizer"]
-        [entrees.append((item[1], item[3])) for item in menuItems if item[2] == "Entree"]
-        [sides.append((item[1], item[3])) for item in menuItems if item[2] == "Side"]
+        [drinks.append(str(item[1]) + " " + str(item[3]) + " (" + str(item[0]) + ")") for item in menuItems if item[2] == "Drink"]
+        [alcohol.append(str(item[1]) + " " + str(item[3]) + " (" + str(item[0]) + ")") for item in menuItems if item[2] == "Alcohol"]
+        [appetizers.append(str(item[1]) + " " + str(item[3]) + " (" + str(item[0]) + ")") for item in menuItems if item[2] == "Appetizer"]
+        [entrees.append(str(item[1]) + " " + str(item[3]) + " (" + str(item[0]) + ")") for item in menuItems if item[2] == "Entree"]
+        [sides.append(str(item[1]) + " " + str(item[3]) + " (" + str(item[0]) + ")") for item in menuItems if item[2] == "Side"]
 
         # Use these lists to create our dropdowns
         self.drinksDown = ttk.Combobox(self, value=drinks)
@@ -260,26 +271,90 @@ class MenuSelect(tk.Tk):
         self.sidesDown.place(x=800, y=20)
 
     def submitOrderInfo(self):
-        print("Customer " + self.currCustomer + " ordered:")
-        print(self.drinksDown.get())
-        print(self.alcoholDown.get())
-        print(self.appetizersDown.get())
-        print(self.entreesDown.get())
-        print(self.sidesDown.get())
+        if (self.drinksDown.get() != ""):
+            custID = self.currCustomer.split("(")[1].split(")")[0]
+            drinkID = str(self.drinksDown.get()).split("(")[1].split(")")[0]
+            args = (int(custID), int(drinkID), 0)
+            query = "INSERT INTO nxtgen_order(Customer_ID, Item_ID, Completed) VALUES" + str(args)
+            mycursor.execute(query)
+            mydb.commit()
+        if (self.alcoholDown.get() != ""):
+            custID = self.currCustomer.split("(")[1].split(")")[0]
+            alcoholID = str(self.alcoholDown.get()).split("(")[1].split(")")[0]
+            args = (int(custID), int(alcoholID), 0)
+            query = "INSERT INTO nxtgen_order(Customer_ID, Item_ID, Completed) VALUES" + str(args)
+            mycursor.execute(query)
+            mydb.commit()
+        if (self.appetizersDown.get() != ""):
+            custID = self.currCustomer.split("(")[1].split(")")[0]
+            appetizersID = str(self.appetizersDown.get()).split("(")[1].split(")")[0]
+            args = (int(custID), int(appetizersID), 0)
+            query = "INSERT INTO nxtgen_order(Customer_ID, Item_ID, Completed) VALUES" + str(args)
+            mycursor.execute(query)
+            mydb.commit()
+        if (self.entreesDown.get() != ""):
+            custID = self.currCustomer.split("(")[1].split(")")[0]
+            entreesID = str(self.entreesDown.get()).split("(")[1].split(")")[0]
+            args = (int(custID), int(entreesID), 0)
+            query = "INSERT INTO nxtgen_order(Customer_ID, Item_ID, Completed) VALUES" + str(args)
+            mycursor.execute(query)
+            mydb.commit()
+        if (self.sidesDown.get() != ""):
+            custID = self.currCustomer.split("(")[1].split(")")[0]
+            sidesID = str(self.sidesDown.get()).split("(")[1].split(")")[0]
+            args = (int(custID), int(sidesID), 0)
+            query = "INSERT INTO nxtgen_order(Customer_ID, Item_ID, Completed) VALUES" + str(args)
+            mycursor.execute(query)
+            mydb.commit()
+        messagebox.showwarning("showinfo", "OrderSubmitted")
 
     def finishOrder(self):
         self.destroy()
-        ReviewOrder(self.currCustomer)
+        ServerView()
+        # ReviewOrder(self.currCustomer)
 
-class ReviewOrder(tk.Tk):
+class ViewOrder(tk.Tk):
     def __init__(self, customerName):
         super().__init__()
         self.title("Review Order")
         self.geometry("500x200")
 
+class LoginView(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("Login In")
+        self.geometry("500x200")
+
+        Label(self, text="Username").place(x=120, y=10)
+        self.userName = ttk.Entry(self)
+        self.userName.place(x=120, y=30)
+
+        Label(self, text="Password").place(x=120, y=70)
+        self.password = ttk.Entry(self)
+        self.password.place(x=120, y=90)
+
+
+        self.loginBtn = ttk.Button(self, text='Login')
+        self.loginBtn['command'] = self.loginUser
+        self.loginBtn.place(x=120, y=120)
+
+        # self.loginBtn = ttk.Button(self, text="Login", command=self.loginUser).place(x=120, y=120)
+        self.closeBtn = ttk.Button(self, text="Close", command=self.destroy).place(x=5, y=170)
+
+    def loginUser(self):
+        self.Key = b'l2ihTWOCdrskUed1cWfgMGQzwGOSD3EiKZ0IxWQGpzc='
+        print(self.Key)
+        self.fernet = Fernet(self.Key)
+        self.encPassword = self.fernet.encrypt((self.password.get()).encode())
+
+        print(self.encPassword)
+
+        self.decMessage = self.fernet.decrypt(self.encPassword).decode()
+        print(self.decMessage)
+    
 
 if __name__ == "__main__":
-    app = ServerView()
+    app = LoginView()
     app.mainloop()
 
 
