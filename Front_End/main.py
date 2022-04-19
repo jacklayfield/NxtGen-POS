@@ -109,50 +109,61 @@ class NewCustomer(tk.Tk):
 
 # page for the server view
 class ServerView(tk.Tk):
-    def __init__(self):
+    def __init__(self, serverInfo):
         super().__init__()
         self.title("Server View")
         self.geometry("500x200")  
+        self.info = serverInfo
 
         # This is the button to create an order used by the server
         btnCreateOrder = Button(self, text="Create Order",
                         padx=50, pady=50, command=self.createOrder)
-        btnCreateOrder.place(x=0, y=0)
+        btnCreateOrder.place(x=10, y=0)
 
         # This is the button to view the orders used by the server
-        btnViewOrder = Button(self, text="View Order", padx=50,
+        btnViewOrder = Button(self, text="View Orders", padx=50,
                             pady=50, command=self.viewOrder)
-        btnViewOrder.place(x=335, y=0)
+        btnViewOrder.place(x=325, y=0)
 
         # This is the button to create a new customer
         btnAddCustomer = Button(
             self, text="Create New Customer", command=self.createNewCustomer)
         btnAddCustomer.place(x=190, y=100)
 
+        btnLogout = Button(self, text="Log Out", command=self.logOut)
+        btnLogout.place(x=20, y=160)
+        self.loginInfo = Label(self, text="Logged in as " + self.info[1] + " " + self.info[2] + " (" + self.info[6] + ")")
+        # self.loginInfo.place(y=150)
+        self.loginInfo.place(rely=1.0, relx=1.0, x=0, y=0, anchor=SE)
+
     # Creating an order button
     def createOrder(self):
         self.destroy()
-        tablesel = TableSelect()
-        tablesel.mainloop()
-        print("New Order")
+        TableSelect(self.info)
+        # print("New Order")
 
     def viewOrder(self):
-        print("View Order")
+        self.destroy()
+        ViewOrders(self.info)
+        # print("View Order")
 
     # Creating a new customer button
     def createNewCustomer(self):
         self.destroy()
-        cust = NewCustomer()
-        cust.mainloop()
-        print("Create New Customer")
+        NewCustomer()
+        # print("Create New Customer")
+
+    def logOut(self):
+        self.destroy()
+        LoginView()
 
 # Making a new window for selecting customers to a table
 class TableSelect(tk.Tk):
-    def __init__(self):
+    def __init__(self, employeeInfo):
         super().__init__()
         self.title("Table Select")
         self.geometry("500x200")
-
+        self.info = employeeInfo
         # Makes the button that can cancel the page
         cancelButton = ttk.Button(self, text="Close",
                           command=self.closeButton)
@@ -202,7 +213,7 @@ class TableSelect(tk.Tk):
             customerFName, customerLName = customerInfo[0], customerInfo[1]
             print(tableID + " " + customerFName + " " + customerLName)
             self.destroy()
-            MenuSelect(customer)
+            MenuSelect(customer, self.info)
 
     # Close the window button
     def closeButton(self):
@@ -211,12 +222,12 @@ class TableSelect(tk.Tk):
 
 # Choosing the items that the customer has ordered
 class MenuSelect(tk.Tk):
-    def __init__(self, customerName):
+    def __init__(self, customerName, employeeInfo):
         super().__init__()
         self.title("Menu Select")
         self.geometry("1000x200")
         self.currCustomer = customerName
-
+        self.info = employeeInfo
         # Labels for the different categories
         Label(self, text="Drinks").place(x=5)
         Label(self, text="Alcohol").place(x=200)
@@ -274,86 +285,147 @@ class MenuSelect(tk.Tk):
         if (self.drinksDown.get() != ""):
             custID = self.currCustomer.split("(")[1].split(")")[0]
             drinkID = str(self.drinksDown.get()).split("(")[1].split(")")[0]
-            args = (int(custID), int(drinkID), 0)
-            query = "INSERT INTO nxtgen_order(Customer_ID, Item_ID, Completed) VALUES" + str(args)
+            args = (int(custID), int(drinkID), 0, int(self.info[0]))
+            query = "INSERT INTO nxtgen_order(Customer_ID, Item_ID, Completed, Employee_ID) VALUES" + str(args)
             mycursor.execute(query)
             mydb.commit()
         if (self.alcoholDown.get() != ""):
             custID = self.currCustomer.split("(")[1].split(")")[0]
             alcoholID = str(self.alcoholDown.get()).split("(")[1].split(")")[0]
-            args = (int(custID), int(alcoholID), 0)
-            query = "INSERT INTO nxtgen_order(Customer_ID, Item_ID, Completed) VALUES" + str(args)
+            args = (int(custID), int(alcoholID), 0, int(self.info[0]))
+            query = "INSERT INTO nxtgen_order(Customer_ID, Item_ID, Completed, Employee_ID) VALUES" + str(args)
             mycursor.execute(query)
             mydb.commit()
         if (self.appetizersDown.get() != ""):
             custID = self.currCustomer.split("(")[1].split(")")[0]
             appetizersID = str(self.appetizersDown.get()).split("(")[1].split(")")[0]
-            args = (int(custID), int(appetizersID), 0)
-            query = "INSERT INTO nxtgen_order(Customer_ID, Item_ID, Completed) VALUES" + str(args)
+            args = (int(custID), int(appetizersID), 0, int(self.info[0]))
+            query = "INSERT INTO nxtgen_order(Customer_ID, Item_ID, Completed, Employee_ID) VALUES" + str(args)
             mycursor.execute(query)
             mydb.commit()
         if (self.entreesDown.get() != ""):
             custID = self.currCustomer.split("(")[1].split(")")[0]
             entreesID = str(self.entreesDown.get()).split("(")[1].split(")")[0]
-            args = (int(custID), int(entreesID), 0)
-            query = "INSERT INTO nxtgen_order(Customer_ID, Item_ID, Completed) VALUES" + str(args)
+            args = (int(custID), int(entreesID), 0, int(self.info[0]))
+            query = "INSERT INTO nxtgen_order(Customer_ID, Item_ID, Completed, Employee_ID) VALUES" + str(args)
             mycursor.execute(query)
             mydb.commit()
         if (self.sidesDown.get() != ""):
             custID = self.currCustomer.split("(")[1].split(")")[0]
             sidesID = str(self.sidesDown.get()).split("(")[1].split(")")[0]
-            args = (int(custID), int(sidesID), 0)
-            query = "INSERT INTO nxtgen_order(Customer_ID, Item_ID, Completed) VALUES" + str(args)
+            args = (int(custID), int(sidesID), 0, int(self.info[0]))
+            query = "INSERT INTO nxtgen_order(Customer_ID, Item_ID, Completed, Employee_ID) VALUES" + str(args)
             mycursor.execute(query)
             mydb.commit()
         messagebox.showwarning("showinfo", "OrderSubmitted")
 
     def finishOrder(self):
         self.destroy()
-        ServerView()
+        ServerView(self.info)
         # ReviewOrder(self.currCustomer)
 
-class ViewOrder(tk.Tk):
-    def __init__(self, customerName):
+class ViewOrders(tk.Tk):
+    def __init__(self, employee):
         super().__init__()
         self.title("Review Order")
-        self.geometry("500x200")
+        self.geometry("500x600")
+        self.info = employee
+
+        self.loginInfo = Label(self, text="Logged in as " + self.info[1] + " " + self.info[2] + " (" + self.info[6] + ")")
+        self.loginInfo.place(rely=1.0, relx=1.0, x=0, y=0, anchor=SE)
+
+        Label(self, text="Current Orders For: " + self.info[1] + " " + self.info[2]).place(x=0, y=0)
+        Label(self, text="Customer Name").place(x=30, y=30)
+        Label(self, text="Food Item Ordered").place(x=150, y=30)
+        Label(self, text="Price").place(x=280, y=30)
+        Label(self, text="Completed").place(x=350, y=30)
+
+        mycursor.execute('SELECT * FROM sys.nxtgen_order WHERE Employee_ID = ' + str(self.info[0]))
+        orderInfo = mycursor.fetchall()
+        for order in orderInfo:
+            self.foodID = order[1]
+            self.customerID = order[3]
+            self.completed = order[2]
+
+            mycursor.execute('SELECT * FROM sys.menu WHERE Item_ID = ' + str(self.foodID))
+            self.foodName = mycursor.fetchall()
+            self.foodName1 = self.foodName[0][1]
+            print(self.foodName1)
+
+            mycursor.execute('SELECT * FROM sys.customer WHERE Customer_ID = ' + str(self.customerID))
+            self.customerName = mycursor.fetchall()
+            self.customerName1 = self.customerName[0][1] + " " + self.customerName[0][2]
+            print(self.customerName1)
+
+            if (self.completed == 0):
+                print("Pending")
+            else:
+                print("Completed")
+
+            print("----------------------------")
+
+
+
+            # print(order)
+       
 
 class LoginView(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Login In")
-        self.geometry("500x200")
+        self.geometry("300x200")
 
-        Label(self, text="Username").place(x=120, y=10)
+        Label(self, text="Username").place(x=20, y=10)
         self.userName = ttk.Entry(self)
-        self.userName.place(x=120, y=30)
+        self.userName.place(x=20, y=30)
 
-        Label(self, text="Password").place(x=120, y=70)
-        self.password = ttk.Entry(self)
-        self.password.place(x=120, y=90)
+        Label(self, text="Password").place(x=20, y=70)
+        self.password = ttk.Entry(self, show="*")
+        self.password.place(x=20, y=90)
 
 
         self.loginBtn = ttk.Button(self, text='Login')
         self.loginBtn['command'] = self.loginUser
-        self.loginBtn.place(x=120, y=120)
+        self.loginBtn.place(x=180, y=60)
 
         # self.loginBtn = ttk.Button(self, text="Login", command=self.loginUser).place(x=120, y=120)
         self.closeBtn = ttk.Button(self, text="Close", command=self.destroy).place(x=5, y=170)
 
+        # self.encrptBtn = ttk.Button(self, text="encrypt", command=self.giveEncrptedPasswords).place(x=100, y=120)
+
     def loginUser(self):
         self.Key = b'l2ihTWOCdrskUed1cWfgMGQzwGOSD3EiKZ0IxWQGpzc='
-        print(self.Key)
+        # print(self.Key)
         self.fernet = Fernet(self.Key)
-        self.encPassword = self.fernet.encrypt((self.password.get()).encode())
+        # self.encPassword = self.fernet.encrypt((self.password.get()).encode())
 
-        print(self.encPassword)
+        # print(self.encPassword)
+        # print(len(self.encPassword))
 
-        self.decMessage = self.fernet.decrypt(self.encPassword).decode()
-        print(self.decMessage)
+        # self.decMessage = self.fernet.decrypt(self.encPassword).decode()
+        check = False
+        mycursor.execute('SELECT * FROM sys.employee')
+        employees = mycursor.fetchall()
+        for employee in employees:
+            self.decMessage = self.fernet.decrypt(employee[8].encode()).decode()
+            if ((self.password.get() == self.decMessage) and (self.userName.get() == employee[7])):
+                if (employee[6] == "Server"):
+                    self.destroy()
+                    ServerView(employee)
+                elif (employee[6] == "Cook"):
+                    print("I am a cook")
+                elif (employee[6] == "Manager"):
+                    print("I am a manager")
+                check = True
+                break
+        if (not check):
+            messagebox.showwarning("showwarning", "Incorrect Login! Please Try Again")
+
+        # print(self.decMessage)
     
 
 if __name__ == "__main__":
+    # app = ViewOrders("Something")
     app = LoginView()
     app.mainloop()
 
