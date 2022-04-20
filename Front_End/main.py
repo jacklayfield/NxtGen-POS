@@ -377,20 +377,24 @@ class ViewOrders(tk.Tk):
         self.loginInfo.place(rely=1.0, relx=1.0, x=0, y=0, anchor=SE)
 
         # Lables for displaying information about the current employees orders
-        self.orderLabel = Label(self, text="Current Orders For: " + self.info[1] + " " + self.info[2])
+        self.orderLabel = Label(self, text="Current Orders For : " + self.info[1] + " " + self.info[2])
         self.orderLabel.grid(row=0, column=0, sticky=E, pady=5)
 
-        self.custLabel = Label(self, text="Customer Name")
-        self.custLabel.grid(row=1, column=0, padx=5, pady=5)
+        self.custLabel = Label(self, text="Customer Name", font=('bold'))
+        self.custLabel.grid(row=2, column=0, padx=5, pady=5)
 
-        self.foodLabel = Label(self, text="Food Item Ordered")
-        self.foodLabel.grid(row=1, column=1, padx=10, pady=5)
+        self.foodLabel = Label(self, text="Food Item Ordered", font=('bold'))
+        self.foodLabel.grid(row=2, column=1, padx=10, pady=5)
 
-        self.priceLabel = Label(self, text="Price")
-        self.priceLabel.grid(row=1, column=2, padx=10, pady=5)
+        self.priceLabel = Label(self, text="Price", font=('bold'))
+        self.priceLabel.grid(row=2, column=2, padx=10, pady=5)
 
-        self.complLabel = Label(self, text="Completed")
-        self.complLabel.grid(row=1, column=3, padx=10, pady=5)
+        self.complLabel = Label(self, text="Completed", font=('bold'))
+        self.complLabel.grid(row=2, column=3, padx=10, pady=5)
+
+        # Making a null row for formating
+        self.nullLabel = Label(self)
+        self.nullLabel.grid(row=1, column=0)
 
         # Getting the actually information that will be displayed
         mycursor.execute('SELECT * FROM sys.nxtgen_order WHERE Employee_ID = ' + str(self.info[0]))
