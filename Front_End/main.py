@@ -20,100 +20,8 @@ mydb = mysql.connector.connect(
 # Getting the original cursor
 mycursor = mydb.cursor()
 
-# Page for making a new customer
-class NewCustomer(tk.Tk):
-    def __init__(self, employeeInfo):
-        super().__init__()
-        # Creating the new customer window
-        self.title('Customer Info')
-        self.geometry('410x140')
-        self.info = employeeInfo
 
-        # Creating the labels and the entries 
-        self.FName = ttk.Entry(self)
-        self.LName = ttk.Entry(self)
-        self.Email = ttk.Entry(self)
-        self.Notes = ttk.Entry(self)
-        self.FName.grid(row=1, column=0, padx=5, pady=5)
-        self.LName.grid(row=1, column=1, padx=5, pady=5)
-        self.Email.grid(row=1, column=2, padx=5, pady=5)
-        self.Notes.grid(row=3, column=1, padx=5, pady=5)
-        self.firstLabel = Label(self, text="Enter First Name")
-        self.firstLabel.grid(row=0, column=0, padx=5, pady=2)
-
-        self.lastLabel = Label(self, text="Enter Last Name")
-        self.lastLabel.grid(row=0, column=1, padx=5, pady=2)
-
-        self.emailLabel = Label(self, text="Enter Email Name")
-        self.emailLabel.grid(row=0, column=2, padx=5, pady=2)
-
-        self.notesLabel = Label(self, text="Enter General Notes")
-        self.notesLabel.grid(row=2, column=1, padx=5, pady=2)
-
-        # Creating the submit button once information is entered
-        self.button = ttk.Button(self, text='Submit')
-        self.button['command'] = self.button_clicked
-        self.button.grid(row=4, column=2, sticky=W)
-
-        # To cancel the new customer creation
-        cancelButton = ttk.Button(self, text="Close", command=self.closeButton)
-        cancelButton.grid(row=4, column=0, sticky=E)
-
-    # When information is entered this will submit it to the database
-    def button_clicked(self):
-        mycursor.execute('SELECT * FROM sys.customer')
-        tableInfo = mycursor.fetchall()
-        newID = 1 + len(tableInfo)
-
-        # If customer first name is null, we require that they input a first name
-        if self.FName.get() == "":
-            messagebox.showwarning("showwarning", "Please Enter First Name")
-
-        # If customer last name is null, we require that they input a last name
-        elif self.LName.get() == "":
-            messagebox.showwarning("showwarning", "Please Enter Last Name")
-
-        # If customer does not want to give email and notes, make those null
-        elif self.Email.get() == "" and self.Notes.get() == "":
-            args = (newID, self.FName.get(), self.LName.get())
-            query = "INSERT INTO customer(Customer_ID, FName, LName) VALUES" + str(args)
-            mycursor.execute(query)
-            mydb.commit()
-            self.destroy()
-            ServerView(self.info)
-
-        # If customer does not want to give notes, make it null
-        elif self.Notes.get() == "":
-            args = (newID, self.FName.get(), self.LName.get(), self.Email.get())
-            query = "INSERT INTO customer(Customer_ID, FName, LName, Email) VALUES" + str(args)
-            mycursor.execute(query)
-            mydb.commit()
-            self.destroy()
-            ServerView(self.info)
-
-        # If customer does not want to give email, make it null
-        elif self.Email.get() == "":
-            args = (newID, self.FName.get(), self.LName.get(), self.Notes.get())
-            query = "INSERT INTO customer(Customer_ID, FName, LName, General_Notes) VALUES" + str(args)
-            mycursor.execute(query)
-            mydb.commit()
-            self.destroy()
-            ServerView(self.info)
-
-        # If all values are entered we do a regular sql add with all information
-        else:
-            args = (newID, self.FName.get(), self.LName.get(), self.Email.get(), self.Notes.get())
-            query = "INSERT INTO customer(Customer_ID, FName, LName, Email, General_Notes) VALUES" + str(args)
-            mycursor.execute(query)
-            mydb.commit()
-            self.destroy()
-            ServerView(self.info)
-
-    # Close the window button
-    def closeButton(self):
-        self.destroy()
-        ServerView(self.info)
-
+# Server View-----------------------------------------------------------------------------------------------
 # page for the server view
 class ServerView(tk.Tk):
     def __init__(self, employeeInfo):
@@ -439,7 +347,104 @@ class ViewOrders(tk.Tk):
         self.destroy()
         # if (self.)
         ServerView(self.info)
-       
+
+# Page for making a new customer
+class NewCustomer(tk.Tk):
+    def __init__(self, employeeInfo):
+        super().__init__()
+        # Creating the new customer window
+        self.title('Customer Info')
+        self.geometry('410x140')
+        self.info = employeeInfo
+
+        # Creating the labels and the entries 
+        self.FName = ttk.Entry(self)
+        self.LName = ttk.Entry(self)
+        self.Email = ttk.Entry(self)
+        self.Notes = ttk.Entry(self)
+        self.FName.grid(row=1, column=0, padx=5, pady=5)
+        self.LName.grid(row=1, column=1, padx=5, pady=5)
+        self.Email.grid(row=1, column=2, padx=5, pady=5)
+        self.Notes.grid(row=3, column=1, padx=5, pady=5)
+        self.firstLabel = Label(self, text="Enter First Name")
+        self.firstLabel.grid(row=0, column=0, padx=5, pady=2)
+
+        self.lastLabel = Label(self, text="Enter Last Name")
+        self.lastLabel.grid(row=0, column=1, padx=5, pady=2)
+
+        self.emailLabel = Label(self, text="Enter Email Name")
+        self.emailLabel.grid(row=0, column=2, padx=5, pady=2)
+
+        self.notesLabel = Label(self, text="Enter General Notes")
+        self.notesLabel.grid(row=2, column=1, padx=5, pady=2)
+
+        # Creating the submit button once information is entered
+        self.button = ttk.Button(self, text='Submit')
+        self.button['command'] = self.button_clicked
+        self.button.grid(row=4, column=2, sticky=W)
+
+        # To cancel the new customer creation
+        cancelButton = ttk.Button(self, text="Close", command=self.closeButton)
+        cancelButton.grid(row=4, column=0, sticky=E)
+
+    # When information is entered this will submit it to the database
+    def button_clicked(self):
+        mycursor.execute('SELECT * FROM sys.customer')
+        tableInfo = mycursor.fetchall()
+        newID = 1 + len(tableInfo)
+
+        # If customer first name is null, we require that they input a first name
+        if self.FName.get() == "":
+            messagebox.showwarning("showwarning", "Please Enter First Name")
+
+        # If customer last name is null, we require that they input a last name
+        elif self.LName.get() == "":
+            messagebox.showwarning("showwarning", "Please Enter Last Name")
+
+        # If customer does not want to give email and notes, make those null
+        elif self.Email.get() == "" and self.Notes.get() == "":
+            args = (newID, self.FName.get(), self.LName.get())
+            query = "INSERT INTO customer(Customer_ID, FName, LName) VALUES" + str(args)
+            mycursor.execute(query)
+            mydb.commit()
+            self.destroy()
+            ServerView(self.info)
+
+        # If customer does not want to give notes, make it null
+        elif self.Notes.get() == "":
+            args = (newID, self.FName.get(), self.LName.get(), self.Email.get())
+            query = "INSERT INTO customer(Customer_ID, FName, LName, Email) VALUES" + str(args)
+            mycursor.execute(query)
+            mydb.commit()
+            self.destroy()
+            ServerView(self.info)
+
+        # If customer does not want to give email, make it null
+        elif self.Email.get() == "":
+            args = (newID, self.FName.get(), self.LName.get(), self.Notes.get())
+            query = "INSERT INTO customer(Customer_ID, FName, LName, General_Notes) VALUES" + str(args)
+            mycursor.execute(query)
+            mydb.commit()
+            self.destroy()
+            ServerView(self.info)
+
+        # If all values are entered we do a regular sql add with all information
+        else:
+            args = (newID, self.FName.get(), self.LName.get(), self.Email.get(), self.Notes.get())
+            query = "INSERT INTO customer(Customer_ID, FName, LName, Email, General_Notes) VALUES" + str(args)
+            mycursor.execute(query)
+            mydb.commit()
+            self.destroy()
+            ServerView(self.info)
+
+    # Close the window button
+    def closeButton(self):
+        self.destroy()
+        ServerView(self.info)
+#----------------------------------------------------------------------------------------------------------
+
+
+# Cook View------------------------------------------------------------------------------------------------
 # Page for cook view
 class CookView(tk.Tk):
     def __init__(self, employeeInfo):
@@ -470,71 +475,12 @@ class CookView(tk.Tk):
         self.destroy()
         LoginView()
 
-# Making a new window for logging in 
-class LoginView(tk.Tk):
-    def __init__(self):
-        super().__init__()
-        self.title("Login In")
-        self.geometry("280x160")
-
-        # Username entry and label box
-        self.userLabel = Label(self, text="Username")
-        self.userLabel.grid(row=0, column=1, sticky=N, pady=2)
-        self.userName = ttk.Entry(self)
-        self.userName.grid(row=1, column=1, pady=5)
-
-        # Password entry and label box
-        self.passLabel = Label(self, text="Password")
-        self.passLabel.grid(row=2, column=1, sticky=N, pady=2)
-        self.password = ttk.Entry(self, show="*")
-        self.password.grid(row=3, column=1, pady=5)
-
-        # Button that will login a user in, gives a warning if it is wrong
-        self.loginBtn = ttk.Button(self, text='Login')
-        self.loginBtn['command'] = self.loginUser
-        self.loginBtn.grid(row=4, column=2, sticky=E, pady=5)
-
-        # Button that will close the entire window 
-        self.closeBtn = ttk.Button(self, text="Close", command=self.destroy)
-        self.closeBtn.grid(row=4, column=0, sticky=E, pady=5)
-        # self.encrptBtn = ttk.Button(self, text="encrypt", command=self.giveEncrptedPasswords).place(x=100, y=120)
-
-    # This method is called to ensure users are in the database
-    def loginUser(self):
-        # Key for the encryption in bytes
-        self.Key = b'l2ihTWOCdrskUed1cWfgMGQzwGOSD3EiKZ0IxWQGpzc='
-        self.fernet = Fernet(self.Key)
-        check = False
-        # Want to check if any of the employees has this current username and password combination
-        mycursor.execute('SELECT * FROM sys.employee')
-        employees = mycursor.fetchall()
-        for employee in employees:
-            self.decMessage = self.fernet.decrypt(employee[8].encode()).decode()
-            if ((self.password.get() == self.decMessage) and (self.userName.get() == employee[7])):
-                # If it works and employee is a server, go to server view
-                if (employee[6] == "Server"):
-                    self.destroy()
-                    ServerView(employee)
-                # If it works and employee is a cook, go to cook view
-                elif (employee[6] == "Cook"):
-                    self.destroy()
-                    CookView(employee)
-                    # print("I am a cook")
-                # If it works and employee is a manager, go to manager/admin view
-                elif (employee[6] == "Manager"):
-                    print("I am a manager")
-                check = True
-                break
-        # If it goes through the entire loop without hitting anything, make warning
-        if (not check):
-            messagebox.showwarning("showwarning", "Incorrect Login! Please Try Again")
-
 # Making a new window for selecting the customer
 class CookSelectCustomer(tk.Tk):
     def __init__(self, employee):
         super().__init__()
         self.title("Cook Select Customer")
-        self.geometry("200x200")
+        self.geometry("180x180")
         self.info = employee
         # 
         self.customerLabel = Label(self, text="Select the Customer Name")
@@ -673,6 +619,80 @@ class CookViewOrders(tk.Tk):
         mydb.commit()
         self.destroy()
         CookView(self.info)
+#----------------------------------------------------------------------------------------------------------
+
+
+# Server View------------------------------------------------------------------------------------------------
+class ManagerView(tk.Tk):
+    def __init__(self, employeeInfo):
+        super().__init__()
+        self.title("Cook View")
+        self.geometry("500x200")
+        self.info = employeeInfo
+
+        # The current user who is logged in labale
+        self.loginInfo = Label(self, text="Logged in as " + self.info[1] + " " + self.info[2] + " (" + self.info[6] + ")")
+        self.loginInfo.place(rely=1.0, relx=1.0, x=0, y=0, anchor=SE)
+
+# Making a new window for logging in 
+class LoginView(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("Login In")
+        self.geometry("280x160")
+
+        # Username entry and label box
+        self.userLabel = Label(self, text="Username")
+        self.userLabel.grid(row=0, column=1, sticky=N, pady=2)
+        self.userName = ttk.Entry(self)
+        self.userName.grid(row=1, column=1, pady=5)
+
+        # Password entry and label box
+        self.passLabel = Label(self, text="Password")
+        self.passLabel.grid(row=2, column=1, sticky=N, pady=2)
+        self.password = ttk.Entry(self, show="*")
+        self.password.grid(row=3, column=1, pady=5)
+
+        # Button that will login a user in, gives a warning if it is wrong
+        self.loginBtn = ttk.Button(self, text='Login')
+        self.loginBtn['command'] = self.loginUser
+        self.loginBtn.grid(row=4, column=2, sticky=E, pady=5)
+
+        # Button that will close the entire window 
+        self.closeBtn = ttk.Button(self, text="Close", command=self.destroy)
+        self.closeBtn.grid(row=4, column=0, sticky=E, pady=5)
+        # self.encrptBtn = ttk.Button(self, text="encrypt", command=self.giveEncrptedPasswords).place(x=100, y=120)
+
+    # This method is called to ensure users are in the database
+    def loginUser(self):
+        # Key for the encryption in bytes
+        self.Key = b'l2ihTWOCdrskUed1cWfgMGQzwGOSD3EiKZ0IxWQGpzc='
+        self.fernet = Fernet(self.Key)
+        check = False
+        # Want to check if any of the employees has this current username and password combination
+        mycursor.execute('SELECT * FROM sys.employee')
+        employees = mycursor.fetchall()
+        for employee in employees:
+            self.decMessage = self.fernet.decrypt(employee[8].encode()).decode()
+            if ((self.password.get() == self.decMessage) and (self.userName.get() == employee[7])):
+                # If it works and employee is a server, go to server view
+                if (employee[6] == "Server"):
+                    self.destroy()
+                    ServerView(employee)
+                # If it works and employee is a cook, go to cook view
+                elif (employee[6] == "Cook"):
+                    self.destroy()
+                    CookView(employee)
+                    # print("I am a cook")
+                # If it works and employee is a manager, go to manager/admin view
+                elif (employee[6] == "Manager"):
+                    self.destroy()
+                    ManagerView(employee)
+                check = True
+                break
+        # If it goes through the entire loop without hitting anything, make warning
+        if (not check):
+            messagebox.showwarning("showwarning", "Incorrect Login! Please Try Again")
 
 if __name__ == "__main__":
     app = LoginView()
