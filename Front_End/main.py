@@ -362,15 +362,18 @@ class MenuSelect(tk.Tk):
     def finishOrder(self):
         self.destroy()
         ServerView(self.info)
-        # ReviewOrder(self.currCustomer)
 
 # Making a new window for viewing all the orders
 class ViewOrders(tk.Tk):
     def __init__(self, employee):
         super().__init__()
         self.title("Review Order")
-        self.geometry("500x600")
+        self.geometry("600x600")
         self.info = employee
+
+        # To cancel the new customer creation
+        cancelButton = ttk.Button(self, text="Close", command=self.closeButton)
+        cancelButton.grid(row=0, column=4, sticky=E)
 
         # The current employees information being displayed
         self.loginInfo = Label(self, text="Logged in as " + self.info[1] + " " + self.info[2] + " (" + self.info[6] + ")")
@@ -381,16 +384,16 @@ class ViewOrders(tk.Tk):
         self.orderLabel.grid(row=0, column=0, sticky=E, pady=5)
 
         self.custLabel = Label(self, text="Customer Name", font=('bold'))
-        self.custLabel.grid(row=2, column=0, padx=5, pady=5)
+        self.custLabel.grid(row=2, column=0, padx=5, pady=5, sticky=W)
 
         self.foodLabel = Label(self, text="Food Item Ordered", font=('bold'))
-        self.foodLabel.grid(row=2, column=1, padx=10, pady=5)
+        self.foodLabel.grid(row=2, column=1, padx=10, pady=5, sticky=W)
 
         self.priceLabel = Label(self, text="Price", font=('bold'))
-        self.priceLabel.grid(row=2, column=2, padx=10, pady=5)
+        self.priceLabel.grid(row=2, column=2, padx=10, pady=5, sticky=W)
 
-        self.complLabel = Label(self, text="Completed", font=('bold'))
-        self.complLabel.grid(row=2, column=3, padx=10, pady=5)
+        self.complLabel = Label(self, text="Status", font=('bold'))
+        self.complLabel.grid(row=2, column=3, padx=10, pady=5, sticky=W)
 
         # Making a null row for formating
         self.nullLabel = Label(self)
@@ -399,27 +402,74 @@ class ViewOrders(tk.Tk):
         # Getting the actually information that will be displayed
         mycursor.execute('SELECT * FROM sys.nxtgen_order WHERE Employee_ID = ' + str(self.info[0]))
         orderInfo = mycursor.fetchall()
+        i = 3
         for order in orderInfo:
+            # print(order)
             self.foodID = order[1]
-            self.customerID = order[3]
+            self.customerID = order[0]
             self.completed = order[2]
 
             mycursor.execute('SELECT * FROM sys.menu WHERE Item_ID = ' + str(self.foodID))
             self.foodName = mycursor.fetchall()
             self.foodName1 = self.foodName[0][1]
-            print(self.foodName1)
+            self.price = self.foodName[0][3]
 
             mycursor.execute('SELECT * FROM sys.customer WHERE Customer_ID = ' + str(self.customerID))
             self.customerName = mycursor.fetchall()
             self.customerName1 = self.customerName[0][1] + " " + self.customerName[0][2]
-            print(self.customerName1)
+
+            # Shows the food items ordered by which customers
+            self.cust = Label(self, text=self.customerName1)
+            self.cust.grid(row=i, column=0, padx=5, pady=5, sticky=W)
+
+            self.food = Label(self, text=self.foodName1)
+            self.food.grid(row=i, column=1, padx=10, pady=5, sticky=W)
+
+            self.price = Label(self, text="$" + str(self.price))
+            self.price.grid(row=i, column=2, padx=10, pady=5, sticky=W)
             if (self.completed == 0):
-                print("Pending")
+                self.completed = Label(self, text="Pending")
+                self.completed.grid(row=i, column=3, padx=10, pady=5, sticky=W)
             else:
-                print("Completed")
-            print("----------------------------")
-            # print(order)
+                self.completed = Label(self, text="Completed")
+                self.completed.grid(row=i, column=3, padx=10, pady=5, sticky=W)
+            i += 1
+
+    def closeButton(self):
+        self.destroy()
+        # if (self.)
+        ServerView(self.info)
        
+# Page for cook view
+class CookView(tk.Tk):
+    def __init__(self, employeeInfo):
+        super().__init__()
+        self.title("Cook View")
+        self.geometry("280x160")
+        self.info = employeeInfo
+
+        # This is the button to create an order used by the server
+        btnViewOrder = Button(self, text="View Order",
+                        padx=50, pady=50, command=self.viewOrder)
+        btnViewOrder.grid(row=0, column=0, padx=5, pady=5)
+
+        # Lets the current user log out to change employees
+        btnLogout = Button(self, text="Log Out", command=self.logOut)
+        btnLogout.grid(row=1, column=0, sticky=W, padx=5, pady=5)
+
+        # The current user who is logged in labale
+        self.loginInfo = Label(self, text="Logged in as " + self.info[1] + " " + self.info[2] + " (" + self.info[6] + ")")
+        self.loginInfo.place(rely=1.0, relx=1.0, x=0, y=0, anchor=SE)
+
+    def viewOrder(self):
+        self.destroy()
+        CookSelectCustomer(self.info)
+
+    # Logging out a user
+    def logOut(self):
+        self.destroy()
+        LoginView()
+
 # Making a new window for logging in 
 class LoginView(tk.Tk):
     def __init__(self):
@@ -467,7 +517,9 @@ class LoginView(tk.Tk):
                     ServerView(employee)
                 # If it works and employee is a cook, go to cook view
                 elif (employee[6] == "Cook"):
-                    print("I am a cook")
+                    self.destroy()
+                    CookView(employee)
+                    # print("I am a cook")
                 # If it works and employee is a manager, go to manager/admin view
                 elif (employee[6] == "Manager"):
                     print("I am a manager")
@@ -476,10 +528,138 @@ class LoginView(tk.Tk):
         # If it goes through the entire loop without hitting anything, make warning
         if (not check):
             messagebox.showwarning("showwarning", "Incorrect Login! Please Try Again")
-    
+
+# Making a new window for selecting the customer
+class CookSelectCustomer(tk.Tk):
+    def __init__(self, employee):
+        super().__init__()
+        self.title("Cook Select Customer")
+        self.geometry("500x200")
+        self.info = employee
+        # 
+        self.customerLabel = Label(self, text="Select the Customer Name")
+        self.customerLabel.grid(row=0, column=1, sticky=E, padx=3, pady=3)
+        customerOptions = [" "]
+        mycursor.execute('SELECT * FROM sys.customer')
+        customerInfo = mycursor.fetchall()
+        for customer in customerInfo:
+            customerOptions.append(str(customer[1]) + " " + str(customer[2]) + " (" + str(customer[0]) + ")")
+        self.customerDropDown = ttk.Combobox(self, value=customerOptions)
+        self.customerDropDown.current(0)
+        self.customerDropDown.grid(row=1, column=1, sticky=E, padx=3, pady=3)
+
+        # Making the submit button for getting the info
+        self.button = ttk.Button(self, text='Submit')
+        self.button['command'] = self.submitCustomer
+        self.button.grid(row=3, column=3, sticky=SW, padx=3, pady=3)
+
+    def submitCustomer(self):
+        customer = self.customerDropDown.get()
+        # If user puts nothing in table select print out alert
+        if customer == " ":
+            messagebox.showwarning("showwarning", "No Customer Selected")
+        else:
+            customerInfo = customer.split(" ")
+            customerFName, customerLName = customerInfo[0], customerInfo[1]
+            print(customerFName + " " + customerLName)
+            self.destroy()
+            CookViewOrders(customer, self.info)
+
+# Making a new view for the cook to view and complete orders
+class CookViewOrders(tk.Tk):
+    def __init__(self, customer, employee):
+        super().__init__()
+        self.title("Review Order")
+        self.geometry("600x600")
+        self.info = employee
+        self.custInfo = customer
+
+        # To cancel the new customer creation
+        cancelButton = ttk.Button(self, text="Close", command=self.closeButton)
+        cancelButton.grid(row=0, column=2, sticky=E)
+
+        # To submit the customers order
+        submitButton = ttk.Button(self, text="Mark Order Completed", command=self.submitOrder)
+        submitButton.grid(row=0, column=3, sticky=E)
+
+        # The current employees information being displayed
+        self.loginInfo = Label(self, text="Logged in as " + self.info[1] + " " + self.info[2] + " (" + self.info[6] + ")")
+        self.loginInfo.place(rely=1.0, relx=1.0, x=0, y=0, anchor=SE)
+
+        # Lables for displaying information about the current employees orders
+        self.orderLabel = Label(self, text="Current Orders For : " + self.info[1] + " " + self.info[2])
+        self.orderLabel.grid(row=0, column=0, sticky=E, pady=5)
+
+        self.custLabel = Label(self, text="Customer Name", font=('bold'))
+        self.custLabel.grid(row=2, column=0, padx=5, pady=5, sticky=W)
+
+        self.foodLabel = Label(self, text="Food Item Ordered", font=('bold'))
+        self.foodLabel.grid(row=2, column=1, padx=10, pady=5, sticky=W)
+
+        self.priceLabel = Label(self, text="Price", font=('bold'))
+        self.priceLabel.grid(row=2, column=2, padx=10, pady=5, sticky=W)
+
+        self.complLabel = Label(self, text="Status", font=('bold'))
+        self.complLabel.grid(row=2, column=3, padx=10, pady=5, sticky=W)
+
+        # Making a null row for formating
+        self.nullLabel = Label(self)
+        self.nullLabel.grid(row=1, column=0)
+
+        self.custID = self.custInfo.split("(")[1].split(")")[0]
+
+        # Getting the actually information that will be displayed
+        mycursor.execute('SELECT * FROM sys.nxtgen_order WHERE Customer_ID = ' + self.custID)
+        orderInfo = mycursor.fetchall()
+        i = 3
+        for order in orderInfo:
+            self.foodID = order[1]
+            self.customerID = order[0]
+            self.completed = order[2]
+
+            mycursor.execute('SELECT * FROM sys.menu WHERE Item_ID = ' + str(self.foodID))
+            self.foodName = mycursor.fetchall()
+            self.foodName1 = self.foodName[0][1]
+            self.price = self.foodName[0][3]
+
+            mycursor.execute('SELECT * FROM sys.customer WHERE Customer_ID = ' + str(self.customerID))
+            self.customerName = mycursor.fetchall()
+            self.customerName1 = self.customerName[0][1] + " " + self.customerName[0][2]
+
+            # Shows the food items ordered by which customers
+            self.cust = Label(self, text=self.customerName1)
+            self.cust.grid(row=i, column=0, padx=5, pady=5, sticky=W)
+
+            self.food = Label(self, text=self.foodName1)
+            self.food.grid(row=i, column=1, padx=10, pady=5, sticky=W)
+
+            self.price = Label(self, text="$" + str(self.price))
+            self.price.grid(row=i, column=2, padx=10, pady=5, sticky=W)
+            if (self.completed == 0):
+                self.completed = Label(self, text="Pending")
+                self.completed.grid(row=i, column=3, padx=10, pady=5, sticky=W)
+            else:
+                self.completed = Label(self, text="Completed")
+                self.completed.grid(row=i, column=3, padx=10, pady=5, sticky=W)
+            i += 1
+
+    def submitButton(self):
+        self.destroy()
+        # if (self.)
+        CookView(self.info)
+
+    def closeButton(self):
+        self.destroy()
+        # if (self.)
+        CookView(self.info)
+
+    def submitOrder(self):
+        mycursor.execute("UPDATE sys.nxtgen_order SET Completed = 1 WHERE Customer_ID = " + str(self.custID))
+        mydb.commit()
+        self.destroy()
+        CookView(self.info)
 
 if __name__ == "__main__":
-    # app = ViewOrders("Something")
     app = LoginView()
     app.mainloop()
 
