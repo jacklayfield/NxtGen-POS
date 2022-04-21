@@ -445,7 +445,7 @@ class CookView(tk.Tk):
     def __init__(self, employeeInfo):
         super().__init__()
         self.title("Cook View")
-        self.geometry("280x160")
+        self.geometry("240x170")
         self.info = employeeInfo
 
         # This is the button to create an order used by the server
@@ -534,11 +534,11 @@ class CookSelectCustomer(tk.Tk):
     def __init__(self, employee):
         super().__init__()
         self.title("Cook Select Customer")
-        self.geometry("500x200")
+        self.geometry("200x200")
         self.info = employee
         # 
         self.customerLabel = Label(self, text="Select the Customer Name")
-        self.customerLabel.grid(row=0, column=1, sticky=E, padx=3, pady=3)
+        self.customerLabel.grid(row=0, column=0, padx=15, pady=3)
         customerOptions = [" "]
         mycursor.execute('SELECT * FROM sys.customer')
         customerInfo = mycursor.fetchall()
@@ -546,13 +546,23 @@ class CookSelectCustomer(tk.Tk):
             customerOptions.append(str(customer[1]) + " " + str(customer[2]) + " (" + str(customer[0]) + ")")
         self.customerDropDown = ttk.Combobox(self, value=customerOptions)
         self.customerDropDown.current(0)
-        self.customerDropDown.grid(row=1, column=1, sticky=E, padx=3, pady=3)
+        self.customerDropDown.grid(row=1, column=0, padx=15, pady=3)
+
+        # Null label to make an extra row
+        self.nullLabel = Label(self, height=2)
+        self.nullLabel.grid(row=2, column=0)
 
         # Making the submit button for getting the info
         self.button = ttk.Button(self, text='Submit')
         self.button['command'] = self.submitCustomer
-        self.button.grid(row=3, column=3, sticky=SW, padx=3, pady=3)
+        self.button.grid(row=3, column=0, sticky=E, pady=3, padx=5)
 
+        # Making the submit button for getting the info
+        self.closebutton = ttk.Button(self, text='Close')
+        self.closebutton['command'] = self.closeCustomer
+        self.closebutton.grid(row=3, column=0, sticky=W, pady=3, padx=5)
+
+    # Lets the cook choose which customer he wants to look at 
     def submitCustomer(self):
         customer = self.customerDropDown.get()
         # If user puts nothing in table select print out alert
@@ -564,6 +574,11 @@ class CookSelectCustomer(tk.Tk):
             print(customerFName + " " + customerLName)
             self.destroy()
             CookViewOrders(customer, self.info)
+
+    # Lets the user close out of this window
+    def closeCustomer(self):
+        self.destroy()
+        CookView(self.info)
 
 # Making a new view for the cook to view and complete orders
 class CookViewOrders(tk.Tk):
