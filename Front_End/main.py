@@ -10,10 +10,13 @@ from setuptools import Command
 from cryptography.fernet import Fernet
 
 # Connecting to Database
+
+pw = input("Enter root password: ")
+
 mydb = mysql.connector.connect(
     host='Localhost',
     user='root',
-    password='Fode1234',
+    password=pw,
     port='3306',
     database='sys'
 )
