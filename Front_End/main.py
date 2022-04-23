@@ -8,6 +8,7 @@ from xmlrpc.client import Server
 import mysql.connector
 from setuptools import Command
 from cryptography.fernet import Fernet
+import datetime
 
 # Connecting to Database
 
@@ -132,9 +133,10 @@ class TableSelect(tk.Tk):
         else:
             tableInfo = table.split(" ")
             tableID = tableInfo[1]
-            customerInfo = customer.split(" ")
-            customerFName, customerLName = customerInfo[0], customerInfo[1]
-            print(tableID + " " + customerFName + " " + customerLName)
+            custID = customer.split("(")[1].split(")")[0]
+            args = (custID, self.info[0], tableID)
+            mycursor.execute("UPDATE sys.nxtgen_table SET Customer_ID = %s, Employee_ID = %s WHERE Table_ID = %s", args)
+            mydb.commit()
             self.destroy()
             MenuSelect(customer, self.info)
 
@@ -520,7 +522,7 @@ class CookSelectCustomer(tk.Tk):
         else:
             customerInfo = customer.split(" ")
             customerFName, customerLName = customerInfo[0], customerInfo[1]
-            print(customerFName + " " + customerLName)
+            # print(customerFName + " " + customerLName)
             self.destroy()
             CookViewOrders(customer, self.info)
 
@@ -625,17 +627,252 @@ class CookViewOrders(tk.Tk):
 #----------------------------------------------------------------------------------------------------------
 
 
-# Server View------------------------------------------------------------------------------------------------
+# Manager View------------------------------------------------------------------------------------------------
 class ManagerView(tk.Tk):
     def __init__(self, employeeInfo):
         super().__init__()
-        self.title("Cook View")
-        self.geometry("500x200")
+        self.title("Manager View")
+        self.geometry("515x200")
         self.info = employeeInfo
+
+        # This is the button to create an order used by the server
+        btndata = Button(self, text="Data Analytics",padx=50, pady=50, command=self.viewData)
+        btndata.grid(row=0, column=0, sticky=E, padx=5, pady=5)
+
+        # This is the button to view the orders used by the server
+        btnViewOrder = Button(self, text="View Orders", padx=50, pady=50, command=self.viewOrder)
+        btnViewOrder.grid(row=0, column=3, sticky=W, padx=5, pady=5)
+
+        # This is the button to create a new customer
+        btnAddCustomer = Button(self, text="Create New Employee", command=self.createNewEmployee)
+        btnAddCustomer.grid(row=0, column=1, sticky=S, padx=5, pady=5)
+
+        # Lets the current user log out to change employees
+        btnLogout = Button(self, text="Log Out", command=self.logOut)
+        btnLogout.grid(row=1, column=0, sticky=W, padx=5, pady=5)
 
         # The current user who is logged in labale
         self.loginInfo = Label(self, text="Logged in as " + self.info[1] + " " + self.info[2] + " (" + self.info[6] + ")")
         self.loginInfo.place(rely=1.0, relx=1.0, x=0, y=0, anchor=SE)
+
+    def viewData(self):
+        print("data")
+
+    def viewOrder(self):
+        self.destroy()
+        ManagerSelectServer(self.info)
+        # ManagerViewOrders()
+        print("view order")
+
+    def createNewEmployee(self):
+        self.destroy()
+        CreateNewEmployee(self.info)
+        print("Create New Employee")
+
+    def logOut(self):
+        self.destroy()
+        LoginView()
+
+class CreateNewEmployee(tk.Tk):
+    def __init__(self, employeeInfo):
+        super().__init__()
+        self.title('New Employee Info')
+        self.geometry('450x140')
+        self.info = employeeInfo
+
+        # Creating the labels and the entries 
+        self.FName = ttk.Entry(self)
+        self.LName = ttk.Entry(self)
+        self.Wage = ttk.Entry(self)
+        self.WageType = ttk.Entry(self)
+
+        positionOptions = [" ", "Server", "Cook", "Manager"]
+        self.positionDropDown = ttk.Combobox(self, value=positionOptions)
+        self.positionDropDown.current(0)
+        self.positionDropDown.grid(row=3, column=2, padx=5, pady=5)
+
+        wageOptions = [" ", "Hourly", "Salary"]
+        self.wageDropDown = ttk.Combobox(self, value=wageOptions)
+        self.wageDropDown.current(0)
+        self.wageDropDown.grid(row=3, column=0, padx=5, pady=5)
+
+        self.FName.grid(row=1, column=0, padx=5, pady=5)
+        self.LName.grid(row=1, column=1, padx=5, pady=5)
+        self.Wage.grid(row=1, column=2, padx=5, pady=5)
+
+        self.firstLabel = Label(self, text="Enter First Name")
+        self.firstLabel.grid(row=0, column=0, padx=5, pady=2)
+
+        self.lastLabel = Label(self, text="Enter Last Name")
+        self.lastLabel.grid(row=0, column=1, padx=5, pady=2)
+
+        self.wageLabel = Label(self, text="Wage")
+        self.wageLabel.grid(row=0, column=2, padx=5, pady=2)
+
+        self.typeLabel = Label(self, text="Wage Type")
+        self.typeLabel.grid(row=2, column=0, padx=5, pady=2)
+
+        self.positionLabel = Label(self, text="Job Position")
+        self.positionLabel.grid(row=2, column=2, padx=5, pady=2)
+
+        # Creating the submit button once information is entered
+        self.button = ttk.Button(self, text='Submit')
+        self.button['command'] = self.submitButton
+        self.button.grid(row=4, column=2, sticky=W)
+
+        # To cancel the new customer creation
+        cancelButton = ttk.Button(self, text="Close", command=self.closeButton)
+        cancelButton.grid(row=4, column=0, sticky=E)
+
+    def closeButton(self):
+        self.destroy()
+        ManagerView(self.info)
+
+    def submitButton(self):
+        self.Key = b'l2ihTWOCdrskUed1cWfgMGQzwGOSD3EiKZ0IxWQGpzc='
+        self.fernet = Fernet(self.Key)
+
+        mycursor.execute('SELECT * FROM sys.employee')
+        tableInfo = mycursor.fetchall()
+
+        # If customer first name is null, we require that they input a first name
+        if (self.FName.get() == "") or (self.LName.get() == "") or (self.Wage.get() == "") or (self.wageDropDown.get() == " ") or (self.positionDropDown.get() == " "):
+            messagebox.showwarning("showwarning", "Please Enter All Fields")
+        else:
+            self.newID = 1 + len(tableInfo)
+            self.date = datetime.datetime.utcnow()
+            self.username = (self.FName.get() + self.LName.get()).lower()
+            self.password = self.fernet.encrypt(str(self.username + "2022").encode())
+            args = (self.newID, self.FName.get(), self.LName.get(), float(self.Wage.get()), self.wageDropDown.get(), self.date.strftime('%Y-%m-%d %H:%M:%S'), self.positionDropDown.get(), self.username, str(self.password.decode()))
+            query = "INSERT INTO employee(Employee_ID, FName, LName, Wage, Wage_Unit, Date_Joined, Type, Username, Password) VALUES" + str(args)
+            mycursor.execute(query)
+            mydb.commit()
+            self.destroy()
+            ManagerView(self.info)
+
+class ManagerSelectServer(tk.Tk):
+    def __init__(self, employeeInfo):
+        super().__init__()
+        self.title("Select Server View")
+        self.geometry("165x150")
+        self.info = employeeInfo
+
+        # Making the Label for the drop down
+        self.serverLabel = Label(self, text="Select an Employee")
+        self.serverLabel.grid(row=0, column=0, padx=10)
+
+        # Making the Drop down to select an employee
+        servers = [" "]
+        mycursor.execute('SELECT * FROM sys.employee')
+        serverInfo = mycursor.fetchall()
+        for server in serverInfo:
+            if (str(server[6]) == "Server"): 
+                servers.append(str(server[1]) + " " + str(server[2]) + " (" + str(server[0]) + ")")
+        self.serverDropDown = ttk.Combobox(self, value=servers)
+        self.serverDropDown.current(0)
+        self.serverDropDown.grid(row=1, column=0, padx=10, pady=10)
+
+        # Making a null row for spacing
+        self.nullLabel = Label(self)
+        self.nullLabel.grid(row=2, pady=10)
+
+        # Making a Close button
+        self.closeButton = ttk.Button(self, text="Close", command=self.closeFun)
+        self.closeButton.grid(row=3, column=0, sticky=W)
+
+        # Making a submit button
+        self.submitButton = ttk.Button(self, text="Submit", command=self.submitBtn)
+        self.submitButton.grid(row=3, column=0, sticky=E)
+
+    # The closing button
+    def closeFun(self):
+        self.destroy()
+        ManagerView(self.info)
+
+    def submitBtn(self):
+        if (str(self.serverDropDown.get()) == " "):
+            messagebox.showwarning("showwarning", "Please Select A Server")
+        else:
+            ManagerViewOrders(self.info, self.serverDropDown.get())
+            self.destroy()
+
+class ManagerViewOrders(tk.Tk):
+    def __init__(self, managerInfo, serverInfo):
+        super().__init__()
+        self.title("Manager View Orders")
+        self.geometry("600x600")
+        self.info = managerInfo
+        self.sInfo = serverInfo
+        
+        # Server Info Display
+        self.serverInfo = Label(self, text="Current Orders For : " + str(self.sInfo))
+        self.serverInfo.grid(row=0, column=0)
+
+        # The current user who is logged in labale
+        self.loginInfo = Label(self, text="Logged in as " + self.info[1] + " " + self.info[2] + " (" + self.info[6] + ")")
+        self.loginInfo.place(rely=1.0, relx=1.0, x=0, y=0, anchor=SE)
+
+        self.custLabel = Label(self, text="Customer Name", font=('bold'))
+        self.custLabel.grid(row=2, column=0, padx=5, pady=5, sticky=W)
+
+        self.foodLabel = Label(self, text="Food Item Ordered", font=('bold'))
+        self.foodLabel.grid(row=2, column=1, padx=10, pady=5, sticky=W)
+
+        self.priceLabel = Label(self, text="Price", font=('bold'))
+        self.priceLabel.grid(row=2, column=2, padx=10, pady=5, sticky=W)
+
+        self.complLabel = Label(self, text="Status", font=('bold'))
+        self.complLabel.grid(row=2, column=3, padx=10, pady=5, sticky=W)
+
+        # To cancel the new customer creation
+        cancelButton = ttk.Button(self, text="Close", command=self.closeButton)
+        cancelButton.grid(row=0, column=4, sticky=E)
+
+        # Making a null row for formating
+        self.nullLabel = Label(self)
+        self.nullLabel.grid(row=1, column=0)
+
+        # Getting the actually information that will be displayed
+        self.serverID = self.sInfo.split("(")[1].split(")")[0]
+        mycursor.execute('SELECT * FROM sys.nxtgen_order WHERE Employee_ID = ' + self.serverID)
+        orderInfo = mycursor.fetchall()
+        i = 3
+        for order in orderInfo:
+            self.foodID = order[1]
+            self.customerID = order[0]
+            self.completed = order[2]
+
+            mycursor.execute('SELECT * FROM sys.menu WHERE Item_ID = ' + str(self.foodID))
+            self.foodName = mycursor.fetchall()
+            self.foodName1 = self.foodName[0][1]
+            self.price = self.foodName[0][3]
+
+            mycursor.execute('SELECT * FROM sys.customer WHERE Customer_ID = ' + str(self.customerID))
+            self.customerName = mycursor.fetchall()
+            self.customerName1 = self.customerName[0][1] + " " + self.customerName[0][2]
+
+            # Shows the food items ordered by which customers
+            self.cust = Label(self, text=self.customerName1)
+            self.cust.grid(row=i, column=0, padx=5, pady=5, sticky=W)
+
+            self.food = Label(self, text=self.foodName1)
+            self.food.grid(row=i, column=1, padx=10, pady=5, sticky=W)
+
+            self.price = Label(self, text="$" + str(self.price))
+            self.price.grid(row=i, column=2, padx=10, pady=5, sticky=W)
+            if (self.completed == 0):
+                self.completed = Label(self, text="Pending")
+                self.completed.grid(row=i, column=3, padx=10, pady=5, sticky=W)
+            else:
+                self.completed = Label(self, text="Completed")
+                self.completed.grid(row=i, column=3, padx=10, pady=5, sticky=W)
+            i += 1
+
+    def closeButton(self):
+        self.destroy()
+        # if (self.)
+        ManagerView(self.info)
+
 
 # Making a new window for logging in 
 class LoginView(tk.Tk):
