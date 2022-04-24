@@ -1003,7 +1003,7 @@ class ChangePwView(tk.Tk):
 
     def close(self):
         self.destroy()
-        LoginView(self)
+        LoginView()
         
 
 if __name__ == "__main__":
