@@ -709,6 +709,7 @@ class ManagerView(tk.Tk):
         self.destroy()
         LoginView()
 
+# Making the window for showing different reports
 class DataView(tk.Tk):
     def __init__(self, employeeInfo):
         super().__init__()
@@ -741,6 +742,7 @@ class DataView(tk.Tk):
         self.destroy()
         ManagerView(self.info)
 
+# Making the window for showing the amount of menu items ordered
 class OrderData(tk.Tk):
     def __init__(self, employeeInfo):
         super().__init__()
@@ -799,6 +801,7 @@ class OrderData(tk.Tk):
         self.destroy()
         DataView(self.info)
 
+# Making the window for showing the amount of orders a customer ordered
 class EmployeeData(tk.Tk):
     def __init__(self, employeeInfo):
         super().__init__()
@@ -857,6 +860,7 @@ class EmployeeData(tk.Tk):
         self.destroy()
         DataView(self.info)
 
+# Making the window for creating a new employee
 class CreateNewEmployee(tk.Tk):
     def __init__(self, employeeInfo):
         super().__init__()
@@ -934,6 +938,7 @@ class CreateNewEmployee(tk.Tk):
             self.destroy()
             ManagerView(self.info)
 
+# Allowing the manger select the server they want to see
 class ManagerSelectServer(tk.Tk):
     def __init__(self, employeeInfo):
         super().__init__()
@@ -980,6 +985,7 @@ class ManagerSelectServer(tk.Tk):
             ManagerViewOrders(self.info, self.serverDropDown.get())
             self.destroy()
 
+# Making the window for showing the order for the server they chose
 class ManagerViewOrders(tk.Tk):
     def __init__(self, managerInfo, serverInfo):
         super().__init__()
@@ -1056,7 +1062,6 @@ class ManagerViewOrders(tk.Tk):
         self.destroy()
         # if (self.)
         ManagerView(self.info)
-
 
 # Making a new window for logging in 
 class LoginView(tk.Tk):
