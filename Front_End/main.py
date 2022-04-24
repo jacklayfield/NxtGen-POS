@@ -6,9 +6,11 @@ import tkinter as tk
 from venv import create
 from xmlrpc.client import Server
 import mysql.connector
+from mysqlx import Column
 from setuptools import Command
 from cryptography.fernet import Fernet
 import datetime
+from tkinter.messagebox import askyesno
 
 # Connecting to Database
 
@@ -121,6 +123,10 @@ class TableSelect(tk.Tk):
         self.loginInfo = Label(self, text="Logged in as " + self.info[1] + " " + self.info[2] + " (" + self.info[6] + ")")
         self.loginInfo.place(rely=1.0, relx=1.0, x=0, y=0, anchor=SE)
 
+        self.btnClearTable = ttk.Button(self, text='Clear table')
+        self.btnClearTable['command'] = self.clearTable
+        self.btnClearTable.grid(row=3, column=1, sticky=SW, padx=3, pady=3)
+
     # Button for submitting the information/ Need to add querys here def submitTableInfo(self):
     def submitTableInfo(self):
         table = self.tableDropDown.get()
@@ -133,6 +139,15 @@ class TableSelect(tk.Tk):
         else:
             tableInfo = table.split(" ")
             tableID = tableInfo[1]
+            mycursor.execute('SELECT * FROM sys.nxtgen_table')
+            tables  = mycursor.fetchall()
+            for table in tables:
+                if (str(tableID) == str(table[0])):
+                    currSeating = int(table[2])
+                    currSeating += 1
+                    tableArgs = (currSeating, tableID)
+                    mycursor.execute("UPDATE sys.nxtgen_table SET Num_Seating = %s WHERE Table_ID = %s", tableArgs)
+                    mydb.commit()
             custID = customer.split("(")[1].split(")")[0]
             args = (custID, self.info[0], tableID)
             mycursor.execute("UPDATE sys.nxtgen_table SET Customer_ID = %s, Employee_ID = %s WHERE Table_ID = %s", args)
@@ -144,6 +159,18 @@ class TableSelect(tk.Tk):
     def closeButton(self):
         self.destroy()
         ServerView(self.info)
+
+    def clearTable(self):
+        table = self.tableDropDown.get()
+        if table == " ":
+            messagebox.showwarning("showwarning", "Select a Table To Clear")
+        else: 
+            tableInfo = table.split(" ")
+            tableID = tableInfo[1]
+            args = (None, 0, None, tableID)
+            mycursor.execute("UPDATE sys.nxtgen_table SET Customer_ID = %s, Num_Seating = %s, Employee_ID = %s WHERE Table_ID = %s", args)
+            mydb.commit()
+            messagebox.showwarning("showinfo", str(table) + " Has Been Cleared")
 
 # Choosing the items that the customer has ordered
 class MenuSelect(tk.Tk):
@@ -636,7 +663,7 @@ class ManagerView(tk.Tk):
         self.info = employeeInfo
 
         # This is the button to create an order used by the server
-        btndata = Button(self, text="Data Analytics",padx=50, pady=50, command=self.viewData)
+        btndata = Button(self, text="Data Reports",padx=50, pady=50, command=self.viewData)
         btndata.grid(row=0, column=0, sticky=E, padx=5, pady=5)
 
         # This is the button to view the orders used by the server
@@ -651,12 +678,24 @@ class ManagerView(tk.Tk):
         btnLogout = Button(self, text="Log Out", command=self.logOut)
         btnLogout.grid(row=1, column=0, sticky=W, padx=5, pady=5)
 
+        btnResetOrders = Button(self, text="Reset All Orders", command=self.resetOrder)
+        btnResetOrders.grid(row=1, column=1, padx=5, pady=5)
+
         # The current user who is logged in labale
         self.loginInfo = Label(self, text="Logged in as " + self.info[1] + " " + self.info[2] + " (" + self.info[6] + ")")
         self.loginInfo.place(rely=1.0, relx=1.0, x=0, y=0, anchor=SE)
 
+    def resetOrder(self):
+        ans = askyesno(title='confirmation', message='Are You Sure You Want to Clear Orders?')
+        if ans:
+            messagebox.showwarning("showinfo", "All Orders Cleared")
+            query = "DELETE FROM sys.nxtgen_order"
+            mycursor.execute(query)
+            mydb.commit()
+
     def viewData(self):
-        print("data")
+        self.destroy()
+        DataView(self.info)
 
     def viewOrder(self):
         self.destroy()
@@ -669,6 +708,154 @@ class ManagerView(tk.Tk):
     def logOut(self):
         self.destroy()
         LoginView()
+
+class DataView(tk.Tk):
+    def __init__(self, employeeInfo):
+        super().__init__()
+
+        self.title("Statistical Reports")
+        self.geometry("380x180")
+        self.info = employeeInfo
+    
+        btnEmployee = Button(self, text="Employee Data",padx=50, pady=50, command=self.viewEmployee)
+        btnEmployee.grid(row=0, column=0, sticky=E, padx=5, pady=5)
+
+        # This is the button to view the orders used by the server
+        btnOrder = Button(self, text="Order Data", padx=50, pady=50, command=self.viewOrder)
+        btnOrder.grid(row=0, column=1, sticky=W, padx=5, pady=5)
+
+        cancelButton = ttk.Button(self, text="Close", command=self.closeButton)
+        cancelButton.grid(row=1, column=0, sticky=W, pady=15)
+
+    def viewEmployee(self):
+        self.destroy()
+        EmployeeData(self.info)
+        # print("employee")
+
+    def viewOrder(self):
+        self.destroy()
+        OrderData(self.info)
+        # print("order")
+
+    def closeButton(self):
+        self.destroy()
+        ManagerView(self.info)
+
+class OrderData(tk.Tk):
+    def __init__(self, employeeInfo):
+        super().__init__()
+
+        self.title("Order Data")
+        self.geometry("560x500")
+        self.info = employeeInfo 
+
+        mycursor.execute('SELECT * FROM sys.menu')
+        items = mycursor.fetchall()
+        mycursor.execute('SELECT * FROM sys.nxtgen_order')
+        orders = mycursor.fetchall()
+        menuAndOrder = []
+
+        for item in items:
+            count = 0
+            for order in orders:
+                if (str(item[0]) == str(order[1])): 
+                    count += 1
+            menuAndOrder.append((str(item[1]), item[2], count))
+
+        menuAndOrder.sort(key=lambda x: x[2])
+        menuAndOrder.reverse()
+        menuAndOrder = menuAndOrder[:20]
+
+        self.employeeLabel = Label(self, text="Most Popular Items")
+        self.employeeLabel.grid(row=0, column=0)
+
+        self.name = Label(self, text="Item Name")
+        self.name.grid(row=1, column=1, sticky=W, padx=15)
+
+        self.ordersNum = Label(self, text="Amount of Orders")
+        self.ordersNum.grid(row=1, column=2, sticky=W, padx=15)
+
+        rows = 2
+        for menu in menuAndOrder:
+            self.menuName = Label(self, text=str(menu[0]) + " (" + str(menu[1]) + ")")
+            self.menuName.grid(row=rows, column=1, sticky=W, padx=15)
+
+            self.orderNum = Label(self, text=menu[2])
+            self.orderNum.grid(row=rows, column=2, sticky=W, padx=15)
+
+            rows += 1
+
+        # To cancel the new customer creation
+        cancelButton = ttk.Button(self, text="Close", command=self.closeButton)
+        cancelButton.grid(row=0, column=3, sticky=E)
+        # print(employeeAndOrder)
+
+        # The current user who is logged in labale
+        self.loginInfo = Label(self, text="Logged in as " + self.info[1] + " " + self.info[2] + " (" + self.info[6] + ")")
+        self.loginInfo.place(rely=1.0, relx=1.0, x=0, y=0, anchor=SE)
+
+    # Close the window button
+    def closeButton(self):
+        self.destroy()
+        DataView(self.info)
+
+class EmployeeData(tk.Tk):
+    def __init__(self, employeeInfo):
+        super().__init__()
+
+        self.title("Employee Data")
+        self.geometry("500x500")
+        self.info = employeeInfo
+
+        mycursor.execute('SELECT * FROM sys.employee')
+        employees = mycursor.fetchall()
+        mycursor.execute('SELECT * FROM sys.nxtgen_order')
+        orders = mycursor.fetchall()
+        employeeAndOrder = []
+
+        for employee in employees:
+            count = 0
+            for order in orders:
+                if (str(employee[0]) == str(order[3])):
+                    count += 1
+            if (str(employee[6]) == "Server"):
+                employeeAndOrder.append((str(employee[1] + " " + str(employee[2])), count))
+
+        employeeAndOrder.sort(key=lambda x: x[1])
+        employeeAndOrder.reverse()
+
+        self.employeeLabel = Label(self, text="Servers Ranked on Orders")
+        self.employeeLabel.grid(row=0, column=0)
+
+        self.name = Label(self, text="Employee Name")
+        self.name.grid(row=1, column=1, sticky=W, padx=10)
+
+        self.ordersNum = Label(self, text="Amount of Orders")
+        self.ordersNum.grid(row=1, column=2, sticky=W, padx=10)
+
+        rows = 2
+        for employee in employeeAndOrder:
+            self.employeeName = Label(self, text=employee[0])
+            self.employeeName.grid(row=rows, column=1, sticky=W, padx=10)
+
+            self.orderNum = Label(self, text=employee[1])
+            self.orderNum.grid(row=rows, column=2, sticky=W, padx=10)
+
+            rows += 1
+
+        # To cancel the new customer creation
+        cancelButton = ttk.Button(self, text="Close", command=self.closeButton)
+        cancelButton.grid(row=0, column=3, sticky=E)
+        # print(employeeAndOrder)
+
+        # The current user who is logged in labale
+        self.loginInfo = Label(self, text="Logged in as " + self.info[1] + " " + self.info[2] + " (" + self.info[6] + ")")
+        self.loginInfo.place(rely=1.0, relx=1.0, x=0, y=0, anchor=SE)
+
+    # Close the window button
+    def closeButton(self):
+        self.destroy()
+        DataView(self.info)
 
 class CreateNewEmployee(tk.Tk):
     def __init__(self, employeeInfo):
@@ -1005,9 +1192,6 @@ class ChangePwView(tk.Tk):
         self.destroy()
         LoginView()
         
-
 if __name__ == "__main__":
     app = LoginView()
     app.mainloop()
-
-
