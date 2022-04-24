@@ -661,13 +661,10 @@ class ManagerView(tk.Tk):
     def viewOrder(self):
         self.destroy()
         ManagerSelectServer(self.info)
-        # ManagerViewOrders()
-        print("view order")
 
     def createNewEmployee(self):
         self.destroy()
         CreateNewEmployee(self.info)
-        print("Create New Employee")
 
     def logOut(self):
         self.destroy()
