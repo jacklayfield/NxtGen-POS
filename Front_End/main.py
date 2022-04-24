@@ -748,7 +748,7 @@ class OrderData(tk.Tk):
         super().__init__()
 
         self.title("Order Data")
-        self.geometry("560x500")
+        self.geometry("580x520")
         self.info = employeeInfo 
 
         mycursor.execute('SELECT * FROM sys.menu')
@@ -756,26 +756,30 @@ class OrderData(tk.Tk):
         mycursor.execute('SELECT * FROM sys.nxtgen_order')
         orders = mycursor.fetchall()
         menuAndOrder = []
-
+        orderCount = 0
         for item in items:
             count = 0
             for order in orders:
                 if (str(item[0]) == str(order[1])): 
                     count += 1
             menuAndOrder.append((str(item[1]), item[2], count))
+            orderCount += count
 
         menuAndOrder.sort(key=lambda x: x[2])
         menuAndOrder.reverse()
         menuAndOrder = menuAndOrder[:20]
 
         self.employeeLabel = Label(self, text="Most Popular Items")
-        self.employeeLabel.grid(row=0, column=0)
+        self.employeeLabel.grid(row=0, column=0, sticky=W)
 
         self.name = Label(self, text="Item Name")
         self.name.grid(row=1, column=1, sticky=W, padx=15)
 
         self.ordersNum = Label(self, text="Amount of Orders")
         self.ordersNum.grid(row=1, column=2, sticky=W, padx=15)
+
+        self.maxOrders = Label(self, text="Maximum of Items Placed")
+        self.maxOrders.grid(row=2, column=0, sticky=W)
 
         rows = 2
         for menu in menuAndOrder:
@@ -786,6 +790,17 @@ class OrderData(tk.Tk):
             self.orderNum.grid(row=rows, column=2, sticky=W, padx=15)
 
             rows += 1
+
+        average = (float)(orderCount)/(float)(rows-2)
+        self.minOrders = Label(self, text="Minimum of Items Placed")
+        self.minOrders.grid(row=rows-1, column=0, sticky=W)
+
+        # Null Row 
+        self.nullLabel = Label(self)
+        self.nullLabel.grid(row=rows, column=0)
+
+        self.average = Label(self, text="Average Orders per Item : " + str(round(average, ndigits=2)))
+        self.average.grid(row=rows+1, column=0, sticky=W)
 
         # To cancel the new customer creation
         cancelButton = ttk.Button(self, text="Close", command=self.closeButton)
@@ -807,7 +822,7 @@ class EmployeeData(tk.Tk):
         super().__init__()
 
         self.title("Employee Data")
-        self.geometry("500x500")
+        self.geometry("550x500")
         self.info = employeeInfo
 
         mycursor.execute('SELECT * FROM sys.employee')
@@ -815,7 +830,7 @@ class EmployeeData(tk.Tk):
         mycursor.execute('SELECT * FROM sys.nxtgen_order')
         orders = mycursor.fetchall()
         employeeAndOrder = []
-
+        orderCount = 0
         for employee in employees:
             count = 0
             for order in orders:
@@ -823,18 +838,22 @@ class EmployeeData(tk.Tk):
                     count += 1
             if (str(employee[6]) == "Server"):
                 employeeAndOrder.append((str(employee[1] + " " + str(employee[2])), count))
+            orderCount += count
 
         employeeAndOrder.sort(key=lambda x: x[1])
         employeeAndOrder.reverse()
 
         self.employeeLabel = Label(self, text="Servers Ranked on Orders")
-        self.employeeLabel.grid(row=0, column=0)
+        self.employeeLabel.grid(row=0, column=0, sticky=W)
 
         self.name = Label(self, text="Employee Name")
         self.name.grid(row=1, column=1, sticky=W, padx=10)
 
         self.ordersNum = Label(self, text="Amount of Orders")
         self.ordersNum.grid(row=1, column=2, sticky=W, padx=10)
+
+        self.maxOrders = Label(self, text="Maximum of Orders Placed")
+        self.maxOrders.grid(row=2, column=0, sticky=W)
 
         rows = 2
         for employee in employeeAndOrder:
@@ -845,6 +864,17 @@ class EmployeeData(tk.Tk):
             self.orderNum.grid(row=rows, column=2, sticky=W, padx=10)
 
             rows += 1
+
+        average = (float)(orderCount)/(float)(rows-2)
+        self.minOrders = Label(self, text="Minimum of Orders Placed")
+        self.minOrders.grid(row=rows-1, column=0, sticky=W)
+
+        # Null Row 
+        self.nullLabel = Label(self)
+        self.nullLabel.grid(row=rows, column=0)
+
+        self.average = Label(self, text="Average Amount of Orders Placed : " + str(round(average, ndigits=2)))
+        self.average.grid(row=rows+1, column=0, sticky=W)
 
         # To cancel the new customer creation
         cancelButton = ttk.Button(self, text="Close", command=self.closeButton)
