@@ -875,7 +875,7 @@ class ManagerViewOrders(tk.Tk):
 class LoginView(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Login In")
+        self.title("Login")
         self.geometry("280x160")
 
         # Username entry and label box
@@ -894,6 +894,10 @@ class LoginView(tk.Tk):
         self.loginBtn = ttk.Button(self, text='Login')
         self.loginBtn['command'] = self.loginUser
         self.loginBtn.grid(row=4, column=2, sticky=E, pady=5)
+
+        self.changePwBtn = ttk.Button(self, text='Change Password')
+        self.changePwBtn['command'] = self.changePw
+        self.changePwBtn.grid(row=4, column=1, pady=5)
 
         # Button that will close the entire window 
         self.closeBtn = ttk.Button(self, text="Close", command=self.destroy)
@@ -930,6 +934,77 @@ class LoginView(tk.Tk):
         # If it goes through the entire loop without hitting anything, make warning
         if (not check):
             messagebox.showwarning("showwarning", "Incorrect Login! Please Try Again")
+
+    def changePw(self):
+        self.destroy()
+        ChangePwView()
+
+class ChangePwView(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("Login")
+        self.geometry("310x200")
+
+        # Username entry and label box
+        self.userLabel = Label(self, text="Username")
+        self.userLabel.grid(row=0, column=1, sticky=N, pady=2)
+        self.userName = ttk.Entry(self)
+        self.userName.grid(row=1, column=1, pady=5)
+
+        # Password entry and label box
+        self.passLabel = Label(self, text="Password")
+        self.passLabel.grid(row=2, column=1, sticky=N, pady=2)
+        self.password = ttk.Entry(self, show="*")
+        self.password.grid(row=3, column=1, pady=5)
+
+        self.newPassLabel = Label(self, text="New Password")
+        self.newPassLabel.grid(row=4, column=1, sticky=N, pady=2)
+        self.newPassword = ttk.Entry(self, show="*")
+        self.newPassword.grid(row=5, column=1, pady=5)
+
+        # Button that will login a user in, gives a warning if it is wrong
+        self.loginBtn = ttk.Button(self, text='Change Password')
+        self.loginBtn['command'] = self.changePassword
+        self.loginBtn.grid(row=6, column=2, sticky=E, pady=5)
+
+        # Button that will close the entire window 
+        self.closeBtn = ttk.Button(self, text="Close", command=self.close)
+        self.closeBtn.grid(row=6, column=0, sticky=E, pady=5)
+        # self.encrptBtn = ttk.Button(self, text="encrypt", command=self.giveEncrptedPasswords).place(x=100, y=120)
+
+    def changePassword(self):
+        # Key for the encryption in bytes
+        self.Key = b'l2ihTWOCdrskUed1cWfgMGQzwGOSD3EiKZ0IxWQGpzc='
+        self.fernet = Fernet(self.Key)
+        check = False
+        # Want to check if any of the employees has this current username and password combination
+        mycursor.execute('SELECT * FROM sys.employee')
+        employees = mycursor.fetchall()
+        for employee in employees:
+            self.decMessage = self.fernet.decrypt(employee[8].encode()).decode()
+            if ((self.password.get() == self.decMessage) and (self.userName.get() == employee[7])):
+                check = True
+                break
+        # If it goes through the entire loop without hitting anything, make warning
+        if (not check):
+            messagebox.showwarning("showwarning", "Incorrect Credentials! Could not update password")
+        else:
+            self.Key = b'l2ihTWOCdrskUed1cWfgMGQzwGOSD3EiKZ0IxWQGpzc='
+            self.fernet = Fernet(self.Key)
+
+            self.password = self.fernet.encrypt(str(self.newPassword.get()).encode())
+
+            args = (str(self.password.decode()), str(self.userName.get()))
+            query = "UPDATE employee SET password=%s WHERE username=%s"
+            mycursor.execute(query, args)
+            mydb.commit()
+            self.destroy()
+            LoginView()
+
+    def close(self):
+        self.destroy()
+        LoginView(self)
+        
 
 if __name__ == "__main__":
     app = LoginView()
