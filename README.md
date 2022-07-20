@@ -1,3 +1,3 @@
 # NxtGen-POS
 POS system using SQL/Python
-(Worked from one machine)
+(Worked from one machine in person)
